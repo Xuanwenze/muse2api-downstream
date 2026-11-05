@@ -1,0 +1,5 @@
+config.json
+*.exe
+muse2api-studio
+muse-studio-linux
+.DS_Store
