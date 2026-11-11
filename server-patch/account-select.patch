@@ -1,5 +1,5 @@
 diff --git a/app.py b/app.py
-index 04e80fc..5942fa5 100644
+index 6fb4d96..5e17e59 100644
 --- a/app.py
 +++ b/app.py
 @@ -484,6 +484,7 @@ class ImageRequest(BaseModel):
@@ -18,7 +18,7 @@ index 04e80fc..5942fa5 100644
  
  
  class ChatMessage(BaseModel):
-@@ -1252,7 +1254,7 @@ def _prepare_reference_images(images: list[str]) -> list[str]:
+@@ -1251,7 +1253,7 @@ def _prepare_reference_images(images: list[str]) -> list[str]:
  
  
  def _queue_image(req: ImageRequest, prompt: str, reference_images: list[str],
@@ -27,7 +27,7 @@ index 04e80fc..5942fa5 100644
      """Opt-in polling avoids reverse-proxy timeouts; no generation is repeated by polling."""
      if idempotency_key and len(idempotency_key) > 256:
          raise HTTPException(400, "Idempotency-Key too long")
-@@ -1290,7 +1292,7 @@ def _queue_image(req: ImageRequest, prompt: str, reference_images: list[str],
+@@ -1289,7 +1291,7 @@ def _queue_image(req: ImageRequest, prompt: str, reference_images: list[str],
          try:
              res, acc_id = _run_generation(
                  prompt, "image", req.timeout or CFG.image_timeout,
@@ -36,7 +36,7 @@ index 04e80fc..5942fa5 100644
                  on_progress=lambda p: store.update_task(tid, progress=p),
                  on_acquired=_on_acquired)
              # Store only media metadata, not large base64 payloads or reference credentials.
-@@ -1313,7 +1315,8 @@ def _queue_image(req: ImageRequest, prompt: str, reference_images: list[str],
+@@ -1312,7 +1314,8 @@ def _queue_image(req: ImageRequest, prompt: str, reference_images: list[str],
  def create_image_task(req: ImageRequest,
                        idempotency_key: str | None = Header(default=None), _=Depends(auth)):
      refs = _prepare_reference_images(_image_references(req))
@@ -46,7 +46,7 @@ index 04e80fc..5942fa5 100644
  
  
  @app.get("/v1/images/tasks/{task_id}")
-@@ -1337,10 +1340,11 @@ async def images_generations(req: ImageRequest, _=Depends(auth)):
+@@ -1336,10 +1339,11 @@ async def images_generations(req: ImageRequest, _=Depends(auth)):
      prompt = build_image_prompt(req, _reference_kinds(ref_images))
      timeout = req.timeout or CFG.image_timeout
      if req.async_:
@@ -60,7 +60,7 @@ index 04e80fc..5942fa5 100644
      except MuseAuthError as exc:
          raise HTTPException(401, str(exc)) from exc
      except MuseGenerationError as exc:
-@@ -1358,6 +1362,7 @@ async def images_edits(request: Request, _=Depends(auth)):
+@@ -1357,6 +1361,7 @@ async def images_edits(request: Request, _=Depends(auth)):
      aspect_ratio = None
      response_format = "url"
      timeout = None
@@ -68,7 +68,7 @@ index 04e80fc..5942fa5 100644
      ref_image_data: list[str] = []
      async_mode = False
  
-@@ -1376,6 +1381,7 @@ async def images_edits(request: Request, _=Depends(auth)):
+@@ -1375,6 +1380,7 @@ async def images_edits(request: Request, _=Depends(auth)):
                  timeout = int(timeout_val)
              except ValueError:
                  pass
@@ -76,7 +76,7 @@ index 04e80fc..5942fa5 100644
          # image 可重复提交；video / audio / file 同样可重复，按字段顺序排在 image 之后
          img_fields = [(name, value) for name in ("image", "image[]", "video", "audio", "file")
                        for value in form.getlist(name)]
-@@ -1410,6 +1416,7 @@ async def images_edits(request: Request, _=Depends(auth)):
+@@ -1409,6 +1415,7 @@ async def images_edits(request: Request, _=Depends(auth)):
          aspect_ratio = body.get("aspect_ratio")
          response_format = body.get("response_format") or "url"
          timeout = body.get("timeout")
@@ -84,7 +84,7 @@ index 04e80fc..5942fa5 100644
          raw_images = body.get("images")
          if raw_images is not None and not isinstance(raw_images, list):
              raise HTTPException(400, "images 必须是数组")
-@@ -1427,6 +1434,7 @@ async def images_edits(request: Request, _=Depends(auth)):
+@@ -1426,6 +1433,7 @@ async def images_edits(request: Request, _=Depends(auth)):
          aspect_ratio=aspect_ratio,
          response_format=response_format,
          timeout=timeout,
@@ -92,7 +92,7 @@ index 04e80fc..5942fa5 100644
          images=ref_image_data,
          **{"async": async_mode}
      )
-@@ -1435,11 +1443,11 @@ async def images_edits(request: Request, _=Depends(auth)):
+@@ -1434,11 +1442,11 @@ async def images_edits(request: Request, _=Depends(auth)):
      full_prompt = build_image_prompt(req_obj, _reference_kinds(ref_image_data))
      gen_timeout = timeout or CFG.image_timeout
      if req_obj.async_:
@@ -106,7 +106,7 @@ index 04e80fc..5942fa5 100644
      except MuseAuthError as exc:
          raise HTTPException(401, str(exc)) from exc
      except MuseGenerationError as exc:
-@@ -1471,7 +1479,8 @@ async def create_video(req: VideoRequest, _=Depends(auth)):
+@@ -1470,7 +1478,8 @@ async def create_video(req: VideoRequest, _=Depends(auth)):
              def prog_cb(p):
                  store.update_task(task["id"], progress=p)
              res, acc_id = _run_generation(prompt, "video", timeout, on_progress=prog_cb,
@@ -116,3 +116,12 @@ index 04e80fc..5942fa5 100644
              vurl = media_url(res["filename"])
              store.update_task(task["id"], status="completed", progress=100, account=acc_id,
                                elapsed=round(time.time() - timing["t0"], 1),
+@@ -2608,7 +2617,7 @@ def _silent_upgrade_worker():
+         _SILENT_UPGRADE_LOCK.release()
+ 
+ 
+-def _check_update_sync(force: bool = False, _auto_upgrade: bool = True) -> dict:
++def _check_update_sync(force: bool = False, _auto_upgrade: bool = False) -> dict:  # Studio 补丁：禁静默自动升级
+     """检测 GitHub 官方仓库 (czg86389-hub/muse2api) 是否有新版本或新提交。
+     发现更新时在后台静默自动拉取升级，不触发前端弹窗或横幅通知。"""
+     now = time.time()

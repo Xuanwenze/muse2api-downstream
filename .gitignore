@@ -1,5 +1,11 @@
 config.json
 *.exe
+*.apk
+*.aar
+*.syso
 muse2api-studio
 muse-studio-linux
 .DS_Store
+android/app/build/
+android/app/libs/
+android/.gradle/
